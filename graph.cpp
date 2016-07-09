@@ -29,7 +29,7 @@ class QueueEntry
         QueueEntry *parent;
         QueueEntry *child;
     public:
-        QueueEntry();
+        QueueEntry(){};
         QueueEntry(Node *node, float cost){
             this->cost = cost;
             this->node = node;
@@ -171,13 +171,16 @@ int Graph::calcDistance(int id_1, int id_2, float &cost)
     return 0;
 }
 
-int Graph::reconstructPath(QueueEntry end_node, int start_id, std::vector<int> &path)
+int Graph::reconstructPath(QueueEntry end_entry, int start_id, std::vector<int> &path)
 {
-    QueueEntry *current_node;
-    current_node = &end_node;
-    while(current_node->node->id = start_id){
-        path.push_back(current_node->node->id);
-        current_node = current_node->parent;
+    QueueEntry *current_entry;
+    current_entry = &end_entry;
+    std::cout << "im reconstructing :\t" << std::endl;
+    std::cout << "current entry \t" << current_entry->node->id << std::endl;
+    std::cout << "parent entry \t" << current_entry->parent->node->id << std::endl;
+    while(current_entry->node->id != start_id){
+        path.push_back(current_entry->node->id);
+        current_entry = current_entry->parent;
     }
 
     return 0;
@@ -203,31 +206,40 @@ int Graph::AStarSearch(
 
     this->calcDistance(start_id, end_id, distance);
     current_entry = QueueEntry(this->getNode(start_id), distance);
+    current_entry.parent = &current_entry;
     queue.push(current_entry);
     while(!queue.empty()){
         current_entry = queue.top();
         queue.pop();
-        visited.insert(current_entry.node->id);
+        std::cout << "********************************" << std::endl;
+        std::cout << "current entry starting \t" << current_entry.node->id << std::endl;
+        std::cout << "parent entry \t" << current_entry.parent->node->id << std::endl;
+        std::cout << "******************************** \n" << std::endl;
         if(current_entry.node->id == end_id){
             this->reconstructPath(current_entry, start_id, path);
             return 0;
         }
         current_node = current_entry.node;
+        visited.insert(current_entry.node->id);
         for (int i = 0; i < current_node->edges.size(); i++){
             // check if neighbor has been visted.
             next_node = current_node->edges[i].first;
             id = next_node->id;
-            if (visited.find(id) != visited.end()){
+            if (visited.find(id) == visited.end()){ // the entry is not yet visited
                 this->calcDistance(id, start_id, distance);
                 this->calcCostToGo(current_node, next_node, cost_to_go);
                 next_entry = QueueEntry(next_node, cost_to_go + distance);
+                std::cout << "current_entry id: \t" << current_node->id << std::endl;
+                std::cout << "next_entry id: \t" << next_node->id << std::endl;
                 next_entry.parent = &current_entry;
-
+                std::cout << "next_entry parent id \t" << next_entry.parent->node->id << std::endl;
+                queue.push(next_entry);
             }
         }
+        std::cout << "size of queue now:\t" << queue.size() << std::endl;
     }
-
-    return 0;
+    std::cout << "FAILED TO FIND PATH" << std::endl;
+    return -1;
 }
 
 int main()
@@ -242,10 +254,14 @@ int main()
     Node *node;
     node = test_graph.getNode(2);
     node = test_graph.getNode(2);
-    std::cout << node->edges[0].first->id << std::endl;
     float cost;
     test_graph.calcCostToGo(1,3, cost);
-    std::cout << "cost to go \t" << cost << std::endl;
+    std::vector<int> path;
+    float total_cost;
+    test_graph.AStarSearch(1, 3, total_cost, path);
+    // for (int i = 0; i < path.size(); i++){
+    //     std::cout << path[i] << std::endl;
+    // }
 }
 
 
