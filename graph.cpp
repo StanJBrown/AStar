@@ -31,8 +31,11 @@ class QueueEntry
     public:
         QueueEntry(){};
         QueueEntry(Node *node, float cost){
-            this->cost = cost;
             this->node = node;
+            this->cost = cost;
+        }
+        int setParent(QueueEntry *entry){
+            this->parent = entry;
         }
 };
 
@@ -193,8 +196,8 @@ int Graph::AStarSearch(
 )
 {
     std::set<int> visited; // used to track visited nodes
-    QueueEntry current_entry;
-    QueueEntry next_entry;
+    // QueueEntry current_entry;
+    // QueueEntry next_entry;
     Node *current_node;
     Node *next_node;
     float distance;
@@ -205,11 +208,12 @@ int Graph::AStarSearch(
     std::priority_queue<QueueEntry, std::vector<QueueEntry>, compareQueueEntry> queue;
 
     this->calcDistance(start_id, end_id, distance);
-    current_entry = QueueEntry(this->getNode(start_id), distance);
-    current_entry.parent = &current_entry;
-    queue.push(current_entry);
+    QueueEntry starting_entry(this->getNode(start_id), distance);
+    starting_entry.parent = &starting_entry;
+    queue.push(starting_entry);
+
     while(!queue.empty()){
-        current_entry = queue.top();
+        QueueEntry current_entry = queue.top();
         queue.pop();
         std::cout << "********************************" << std::endl;
         std::cout << "current entry starting \t" << current_entry.node->id << std::endl;
@@ -228,15 +232,13 @@ int Graph::AStarSearch(
             if (visited.find(id) == visited.end()){ // the entry is not yet visited
                 this->calcDistance(id, start_id, distance);
                 this->calcCostToGo(current_node, next_node, cost_to_go);
-                next_entry = QueueEntry(next_node, cost_to_go + distance);
-                std::cout << "current_entry id: \t" << current_node->id << std::endl;
-                std::cout << "next_entry id: \t" << next_node->id << std::endl;
-                next_entry.parent = &current_entry;
-                std::cout << "next_entry parent id \t" << next_entry.parent->node->id << std::endl;
+                QueueEntry next_entry(next_node, cost_to_go + distance) ;
+                next_entry.setParent(&current_entry);
                 queue.push(next_entry);
+                std::cout << "next_entry id \t" << next_entry.node->id << std::endl;
+                std::cout << "next_entry parent id \t" << next_entry.parent->node->id << std::endl;
             }
         }
-        std::cout << "size of queue now:\t" << queue.size() << std::endl;
     }
     std::cout << "FAILED TO FIND PATH" << std::endl;
     return -1;
@@ -249,7 +251,7 @@ int main()
     test_graph.addNode(2, 0, 0, 20);
     test_graph.addNode(3, 10, 15, 50);
     test_graph.addEdge(1, 2);
-    test_graph.addEdge(1, 3);
+    test_graph.addEdge(2, 3);
 
     Node *node;
     node = test_graph.getNode(2);
