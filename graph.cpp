@@ -40,8 +40,8 @@ class QueueEntry
 };
 
 struct compareQueueEntry{
-    bool operator()(const QueueEntry &q1,const QueueEntry &q2){
-        return q1.cost > q2.cost;
+    bool operator()(const QueueEntry *q1,const QueueEntry *q2){
+        return q1->cost > q2->cost;
     }
 };
 
@@ -60,7 +60,7 @@ class Graph
         int calcCostToGo(int id_1, int id_2, float &cost);
         int calcDistance(Node *node_1, Node *node_2, float &cost);
         int calcDistance(int id_1, int id_2, float &cost);
-        int reconstructPath(QueueEntry end_node, int start_id, std::vector<int> &path);
+        int reconstructPath(QueueEntry *end_node, int start_id, std::vector<int> &path);
         int AStarSearch(
             int start_id,
             int end_id,
@@ -174,18 +174,15 @@ int Graph::calcDistance(int id_1, int id_2, float &cost)
     return 0;
 }
 
-int Graph::reconstructPath(QueueEntry end_entry, int start_id, std::vector<int> &path)
+int Graph::reconstructPath(QueueEntry *end_entry, int start_id, std::vector<int> &path)
 {
     QueueEntry *current_entry;
-    current_entry = &end_entry;
-    std::cout << "im reconstructing :\t" << std::endl;
-    std::cout << "current entry \t" << current_entry->node->id << std::endl;
-    std::cout << "parent entry \t" << current_entry->parent->node->id << std::endl;
+    current_entry = end_entry;
     while(current_entry->node->id != start_id){
         path.push_back(current_entry->node->id);
         current_entry = current_entry->parent;
     }
-
+    path.push_back(start_id);
     return 0;
 }
 int Graph::AStarSearch(
@@ -205,26 +202,27 @@ int Graph::AStarSearch(
     int id;
 
     //set up a priority queue to hold the open set sorted on total cost to go
-    std::priority_queue<QueueEntry, std::vector<QueueEntry>, compareQueueEntry> queue;
+    std::priority_queue<QueueEntry*, std::vector<QueueEntry*>, compareQueueEntry> queue;
 
     this->calcDistance(start_id, end_id, distance);
-    QueueEntry starting_entry(this->getNode(start_id), distance);
-    starting_entry.parent = &starting_entry;
+    QueueEntry *starting_entry;
+    starting_entry = new QueueEntry(this->getNode(start_id), distance);
+    starting_entry->parent = starting_entry;
     queue.push(starting_entry);
 
+    QueueEntry *next_entry;
     while(!queue.empty()){
-        QueueEntry current_entry = queue.top();
+        QueueEntry *current_entry = queue.top();
         queue.pop();
-        std::cout << "********************************" << std::endl;
-        std::cout << "current entry starting \t" << current_entry.node->id << std::endl;
-        std::cout << "parent entry \t" << current_entry.parent->node->id << std::endl;
-        std::cout << "******************************** \n" << std::endl;
-        if(current_entry.node->id == end_id){
-            this->reconstructPath(current_entry, start_id, path);
-            return 0;
+        // std::cout << "********************************" << std::endl;
+        // std::cout << "current entry starting \t" << current_entry->node->id << std::endl;
+        // std::cout << "parent entry \t" << current_entry->parent->node->id << std::endl;
+        // std::cout << "******************************** \n" << std::endl;
+        if(current_entry->node->id == end_id){
+            return this->reconstructPath(current_entry, start_id, path);
         }
-        current_node = current_entry.node;
-        visited.insert(current_entry.node->id);
+        current_node = current_entry->node;
+        visited.insert(current_entry->node->id);
         for (int i = 0; i < current_node->edges.size(); i++){
             // check if neighbor has been visted.
             next_node = current_node->edges[i].first;
@@ -232,11 +230,9 @@ int Graph::AStarSearch(
             if (visited.find(id) == visited.end()){ // the entry is not yet visited
                 this->calcDistance(id, start_id, distance);
                 this->calcCostToGo(current_node, next_node, cost_to_go);
-                QueueEntry next_entry(next_node, cost_to_go + distance) ;
-                next_entry.setParent(&current_entry);
+                next_entry = new QueueEntry(next_node, cost_to_go + distance) ;
+                next_entry->setParent(current_entry);
                 queue.push(next_entry);
-                std::cout << "next_entry id \t" << next_entry.node->id << std::endl;
-                std::cout << "next_entry parent id \t" << next_entry.parent->node->id << std::endl;
             }
         }
     }
@@ -248,10 +244,13 @@ int main()
 {
     Graph test_graph;
     test_graph.addNode(1, 20, 20);
-    test_graph.addNode(2, 0, 0, 20);
-    test_graph.addNode(3, 10, 15, 50);
+    test_graph.addNode(2, 0, -10, 20);
+    test_graph.addNode(3, 10, 15, 0);
+    test_graph.addNode(4, 10, 16, 0);
     test_graph.addEdge(1, 2);
     test_graph.addEdge(2, 3);
+    test_graph.addEdge(2, 4);
+    test_graph.addEdge(3, 4);
 
     Node *node;
     node = test_graph.getNode(2);
@@ -260,10 +259,10 @@ int main()
     test_graph.calcCostToGo(1,3, cost);
     std::vector<int> path;
     float total_cost;
-    test_graph.AStarSearch(1, 3, total_cost, path);
-    // for (int i = 0; i < path.size(); i++){
-    //     std::cout << path[i] << std::endl;
-    // }
+    test_graph.AStarSearch(1, 4, total_cost, path);
+    for (int i = 0; i < path.size(); i++){
+        std::cout << path[i] << std::endl;
+    }
 }
 
 
