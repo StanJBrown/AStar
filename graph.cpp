@@ -29,17 +29,50 @@ int Graph::addNode(int id, float x, float y)
 }
 
 
-int Graph::calcEdgeCost(Node *node_1, Node *node_2, float &cost)
-{
-    float x_sqr;
-    float y_sqr;
+bool Graph::checkIfEdgeExists(Node *node_1, Node *node_2){
+    std::list<std::pair<Node*, float> >::iterator it;
+    for (it = node_1->edges.begin(); it !=node_1->edges.end(); ++it){
+        if (it->first == node_2){
+            return true;
+        }
+    }
+    return false;
+}
 
-    x_sqr = pow(node_1->x - node_2->x, 2);
-    y_sqr = pow(node_1->y - node_2->y, 2);
-    cost = sqrt(y_sqr + x_sqr);
 
+bool Graph::checkIfEdgeExists(int id_1, int id_2){
+    return this->checkIfEdgeExists(this->getNode(id_1), this->getNode(id_2));
+}
+
+
+int Graph::sortEdges(Node *node){
+    node->edges.sort(sortEdgesByCost);
     return 0;
 }
+
+
+int Graph::sortEdges(int id){
+    Node *node;
+    node = this->getNode(id);
+    node->edges.sort(sortEdgesByCost);
+    return 0;
+}
+
+
+int Graph::addEdge(Node *node_1, Node *node_2)
+{
+    if (this->checkIfEdgeExists(node_1, node_2) == false){
+        float cost;
+        this->calcEdgeCost(node_1, node_2, cost);
+
+        node_1->edges.push_back(std::make_pair(node_2, cost));
+        node_2->edges.push_back(std::make_pair(node_1, cost));
+
+        return 0;
+    }
+    return -1;
+}
+
 
 int Graph::addEdge(int id_1, int id_2)
 {
@@ -50,18 +83,9 @@ int Graph::addEdge(int id_1, int id_2)
     node_1 = this->graph.find(id_1)->second;
     node_2 = this->graph.find(id_2)->second;
 
-    this->calcEdgeCost(node_1, node_2, cost);
-
-    node_1->edges.push_back(std::make_pair(node_2, cost) );
-    node_2->edges.push_back(std::make_pair(node_1, cost) );
-
-    return 0;
+    return this->addEdge(node_1, node_2);
 }
 
-Node* Graph::getNode(int id)
-{
-    return this->graph.find(id)->second;
-}
 
 int Graph::calcCostToGo(Node *node_1, Node *node_2, float &cost)
 {
@@ -77,6 +101,7 @@ int Graph::calcCostToGo(Node *node_1, Node *node_2, float &cost)
     return 0;
 }
 
+
 int Graph::calcCostToGo(int id_1, int id_2, float &cost)
 {
     Node *node_1;
@@ -87,6 +112,24 @@ int Graph::calcCostToGo(int id_1, int id_2, float &cost)
     this->calcCostToGo(node_1, node_2, cost);
 
     return 0;
+}
+
+
+int Graph::calcDistance(int id_1, int id_2, float &cost)
+{
+    return this->calcCostToGo(
+        this->getNode(id_1),
+        this->getNode(id_2),
+        cost
+    );
+
+    return 0;
+}
+
+
+Node* Graph::getNode(int id)
+{
+    return this->graph.find(id)->second;
 }
 
 
@@ -104,13 +147,14 @@ int Graph::calcDistance(Node *node_1, Node *node_2, float &cost)
 }
 
 
-int Graph::calcDistance(int id_1, int id_2, float &cost)
+int Graph::calcEdgeCost(Node *node_1, Node *node_2, float &cost)
 {
-    return this->calcCostToGo(
-        this->getNode(id_1),
-        this->getNode(id_2),
-        cost
-    );
+    float x_sqr;
+    float y_sqr;
+
+    x_sqr = pow(node_1->x - node_2->x, 2);
+    y_sqr = pow(node_1->y - node_2->y, 2);
+    cost = sqrt(y_sqr + x_sqr);
 
     return 0;
 }
@@ -153,6 +197,8 @@ int Graph::AStarSearch(
     float cost_to_go;
     int id;
 
+    std::list<std::pair<Node*, float> >::iterator edge_iterator;
+
     // set up a priority queue to hold the open set sorted on total cost to go
     // A queue Entry object is used in order to create track parents of nodes without changing
     // the underlying graph structure
@@ -184,8 +230,10 @@ int Graph::AStarSearch(
         visited.insert(current_entry->node->id);
 
         // go through each edge in the graph
-        for (int i = 0; i < current_node->edges.size(); i++){
-            next_node = current_node->edges[i].first;
+        for (edge_iterator = current_node->edges.begin();
+             edge_iterator != current_node->edges.end();
+             ++edge_iterator){
+            next_node = edge_iterator->first;
             id = next_node->id;
             if (visited.find(id) == visited.end()){ // the entry is not yet visited
                 this->calcDistance(id, start_id, distance);
@@ -201,6 +249,22 @@ int Graph::AStarSearch(
     return -1;
 }
 
+
+int Graph::findNearestNodes(int number){
+    std::map<int, Node*>::iterator it_1;
+    std::map<int, Node*>::iterator it_2;
+
+    for (it_1 = this->graph.begin(); it_1 != this->graph.end(); ++it_1){
+        for (it_2 = this->graph.begin(); it_2 != this->graph.end(); ++it_2){
+            std::cout << "node" << it_2->second->id << std::endl;
+            if (it_1->second->edges.size() < number){
+                this->addEdge(it_1->second, it_2->second);
+            }
+        }
+    }
+}
+
+
 int main()
 {
     Graph test_graph;
@@ -213,6 +277,9 @@ int main()
     test_graph.addEdge(2, 3);
     test_graph.addEdge(2, 4);
     test_graph.addEdge(3, 4);
+    test_graph.addEdge(3, 4);
+
+    std::cout << "Does edge exist: \t" << test_graph.checkIfEdgeExists(1,4) << std::endl;
 
     Node *node;
     node = test_graph.getNode(2);
@@ -225,6 +292,9 @@ int main()
     for (int i = 0; i < path.size(); i++){
         std::cout << path[i] << std::endl;
     }
+    std::cout << "link nearest Nodes" << std::endl;
+    test_graph.findNearestNodes(2);
+
 }
 
 

@@ -4,6 +4,8 @@
 #include <math.h>
 #include <set>
 #include <queue>
+#include <algorithm>
+#include <list>
 
 class Node
 {
@@ -12,7 +14,7 @@ class Node
         float x;
         float y;
         float node_cost;
-        std::vector<std::pair<Node*, float> > edges;
+        std::list<std::pair<Node*, float> > edges; //list is used as erase is a much faster operation
 
         Node(int id, float x, float y){
             this->id = id;
@@ -45,6 +47,11 @@ struct compareQueueEntry{
     }
 };
 
+static bool sortEdgesByCost (const std::pair<Node*, float> &edge_1,
+    const std::pair<Node*, float> &edge_2){
+    return edge_1.second > edge_2.second;
+}
+
 class Graph
 {
     public:
@@ -54,15 +61,30 @@ class Graph
     public:
         int addNode(int id, float x, float y);
         int addNode(int id, float x, float y, float cost);
-        int calcEdgeCost(Node *node_1, Node *node_2, float &cost);
+
+        bool checkIfEdgeExists(Node *node_1, Node *node_2);
+        bool checkIfEdgeExists(int id_1, int id_2);
+
+        int sortEdges(Node *node);
+        int sortEdges(int it);
+
+        int addEdge(Node *node_1, Node *node_2);
         int addEdge(int id_1, int id_2);
-        Node* getNode(int id);
+
+        int removeEdge(Node *node_1, Node *node_2);
+        int removeEdge(int id_1, int id_2);
+
 
         int calcCostToGo(Node *node_1, Node *node_2, float &cost);
         int calcCostToGo(int id_1, int id_2, float &cost);
 
         int calcDistance(Node *node_1, Node *node_2, float &cost);
         int calcDistance(int id_1, int id_2, float &cost);
+
+        Node* getNode(int id);
+        int calcEdgeCost(Node *node_1, Node *node_2, float &cost);
+
+
 
         int reconstructPath(QueueEntry *end_node, int start_id, std::vector<int> &path);
         int cleanupEntries(std::set<QueueEntry*> &entries);
@@ -72,6 +94,8 @@ class Graph
             float &total_cost,
             std::vector<int> &path
         );
+        int findNearestNodes(int number);
+
 
 };
 
