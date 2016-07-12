@@ -1,92 +1,33 @@
-#include <iostream>
-#include <vector>
-#include <map>
-#include <math.h>
-#include <set>
-#include <queue>
+#include "graph.hpp"
 
-class Node
-{
-    public:
-        int id;
-        float x;
-        float y;
-        float node_cost;
-        std::vector<std::pair<Node*, float> > edges;
 
-        Node(int id, float x, float y){
-            this->id = id;
-            this->x = x;
-            this->y = y;
-        }
-};
-
-class QueueEntry
-{
-    public:
-        Node *node;
-        float cost;
-        QueueEntry *parent;
-        QueueEntry *child;
-    public:
-        QueueEntry(){};
-        QueueEntry(Node *node, float cost){
-            this->node = node;
-            this->cost = cost;
-        }
-        int setParent(QueueEntry *entry){
-            this->parent = entry;
-        }
-};
-
-struct compareQueueEntry{
-    bool operator()(const QueueEntry *q1,const QueueEntry *q2){
-        return q1->cost > q2->cost;
+Graph::~Graph(){
+    // clean up the allocated nodes
+    std::map<int, Node*>::iterator it;
+    for(it = this->graph.begin(); it != this->graph.end(); ++it){
+        delete it->second;
     }
-};
-
-class Graph
-{
-    public:
-        std::map<int, Node*> graph;
-
-    public:
-        int addNode(int id, float x, float y);
-        int addNode(int id, float x, float y, float cost);
-        int calcEdgeCost(Node *node_1, Node *node_2, float &cost);
-        int addEdge(int id_1, int id_2);
-        Node* getNode(int id);
-        int calcCostToGo(Node *node_1, Node *node_2, float &cost);
-        int calcCostToGo(int id_1, int id_2, float &cost);
-        int calcDistance(Node *node_1, Node *node_2, float &cost);
-        int calcDistance(int id_1, int id_2, float &cost);
-        int reconstructPath(QueueEntry *end_node, int start_id, std::vector<int> &path);
-        int AStarSearch(
-            int start_id,
-            int end_id,
-            float &total_cost,
-            std::vector<int> &path
-        );
-
-};
-
-int Graph::addNode(int id, float x, float y)
-{
-    Node *new_node = new Node(id, x, y);
-    new_node->node_cost = 0.0;
-    this->graph[id] = new_node;
-
-    return 0;
 }
 
 int Graph::addNode(int id, float x, float y, float cost)
 {
-    Node *new_node = new Node(id, x, y);
-    new_node->node_cost = cost;
-    this->graph[id] = new_node;
-
+    // check if a node with id exists
+    if (this->graph.count(id) == 0){ //
+        Node *new_node = new Node(id, x, y);
+        new_node->node_cost = cost;
+        this->graph[id] = new_node;
+    }else{
+        std::cout << "ERROR, node id already exists" << std::endl;
+        return -1;
+    }
     return 0;
 }
+
+int Graph::addNode(int id, float x, float y)
+{
+    return this->addNode(id, x, y, 0);
+}
+
 
 int Graph::calcEdgeCost(Node *node_1, Node *node_2, float &cost)
 {
@@ -174,6 +115,7 @@ int Graph::calcDistance(int id_1, int id_2, float &cost)
     return 0;
 }
 
+
 int Graph::reconstructPath(QueueEntry *end_entry, int start_id, std::vector<int> &path)
 {
     QueueEntry *current_entry;
@@ -185,6 +127,17 @@ int Graph::reconstructPath(QueueEntry *end_entry, int start_id, std::vector<int>
     path.push_back(start_id);
     return 0;
 }
+
+
+int Graph::cleanupEntries(std::set<QueueEntry*> &entries){
+    // delete all of the entries created by new
+    std::set<QueueEntry*>::iterator it;
+    for(it = entries.begin(); it != entries.end(); ++it){
+        delete *it;
+    }
+}
+
+
 int Graph::AStarSearch(
     int start_id,
     int end_id,
@@ -193,20 +146,23 @@ int Graph::AStarSearch(
 )
 {
     std::set<int> visited; // used to track visited nodes
-    // QueueEntry current_entry;
-    // QueueEntry next_entry;
+    std::set<QueueEntry*> entries; // keep a list of all new entries created for deletion
     Node *current_node;
     Node *next_node;
     float distance;
     float cost_to_go;
     int id;
 
-    //set up a priority queue to hold the open set sorted on total cost to go
+    // set up a priority queue to hold the open set sorted on total cost to go
+    // A queue Entry object is used in order to create track parents of nodes without changing
+    // the underlying graph structure
     std::priority_queue<QueueEntry*, std::vector<QueueEntry*>, compareQueueEntry> queue;
 
     this->calcDistance(start_id, end_id, distance);
     QueueEntry *starting_entry;
+    // intialized and first Queue Entry
     starting_entry = new QueueEntry(this->getNode(start_id), distance);
+    entries.insert(starting_entry);
     starting_entry->parent = starting_entry;
     queue.push(starting_entry);
 
@@ -214,17 +170,21 @@ int Graph::AStarSearch(
     while(!queue.empty()){
         QueueEntry *current_entry = queue.top();
         queue.pop();
-        // std::cout << "********************************" << std::endl;
-        // std::cout << "current entry starting \t" << current_entry->node->id << std::endl;
-        // std::cout << "parent entry \t" << current_entry->parent->node->id << std::endl;
-        // std::cout << "******************************** \n" << std::endl;
+
+        // we are done
         if(current_entry->node->id == end_id){
-            return this->reconstructPath(current_entry, start_id, path);
+            if(this->reconstructPath(current_entry, start_id, path) == 0){
+                this->cleanupEntries(entries); // free the memory allocated to the queue entries
+                return 0;
+            }else{
+                break;
+            }
         }
         current_node = current_entry->node;
         visited.insert(current_entry->node->id);
+
+        // go through each edge in the graph
         for (int i = 0; i < current_node->edges.size(); i++){
-            // check if neighbor has been visted.
             next_node = current_node->edges[i].first;
             id = next_node->id;
             if (visited.find(id) == visited.end()){ // the entry is not yet visited
@@ -232,6 +192,7 @@ int Graph::AStarSearch(
                 this->calcCostToGo(current_node, next_node, cost_to_go);
                 next_entry = new QueueEntry(next_node, cost_to_go + distance) ;
                 next_entry->setParent(current_entry);
+                entries.insert(next_entry);
                 queue.push(next_entry);
             }
         }
@@ -247,6 +208,7 @@ int main()
     test_graph.addNode(2, 0, -10, 20);
     test_graph.addNode(3, 10, 15, 0);
     test_graph.addNode(4, 10, 16, 0);
+    test_graph.addNode(1, 29, 29, 20);
     test_graph.addEdge(1, 2);
     test_graph.addEdge(2, 3);
     test_graph.addEdge(2, 4);
