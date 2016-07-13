@@ -6,7 +6,7 @@
 #include <queue>
 #include <algorithm>
 #include <list>
-
+#include <stdio.h>
 class Node
 {
     public:
@@ -49,7 +49,7 @@ struct compareQueueEntry{
 
 static bool sortEdgesByCost (const std::pair<Node*, float> &edge_1,
     const std::pair<Node*, float> &edge_2){
-    return edge_1.second > edge_2.second;
+    return edge_1.second < edge_2.second; // desencing order
 }
 
 class Graph
@@ -74,7 +74,6 @@ class Graph
         int removeEdge(Node *node_1, Node *node_2);
         int removeEdge(int id_1, int id_2);
 
-
         int calcCostToGo(Node *node_1, Node *node_2, float &cost);
         int calcCostToGo(int id_1, int id_2, float &cost);
 
@@ -84,7 +83,8 @@ class Graph
         Node* getNode(int id);
         int calcEdgeCost(Node *node_1, Node *node_2, float &cost);
 
-
+        int replaceEdge(Node *node_1, Node *node_2, float &cost);
+        int removeEdgeSingular(Node *node_1, Node *node_2);
 
         int reconstructPath(QueueEntry *end_node, int start_id, std::vector<int> &path);
         int cleanupEntries(std::set<QueueEntry*> &entries);
@@ -95,6 +95,7 @@ class Graph
             std::vector<int> &path
         );
         int findNearestNodes(int number);
+        int printAllEdges();
 
 
 };
