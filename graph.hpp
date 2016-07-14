@@ -69,8 +69,8 @@ class Graph
         int addNode(int id, float x, float y);
         int addNode(int id, float x, float y, float cost);
 
-        bool checkIfEdgeExists(Node *node_1, Node *node_2);
-        bool checkIfEdgeExists(int id_1, int id_2);
+        int checkIfEdgeExists(Node *node_1, Node *node_2);
+        int checkIfEdgeExists(int id_1, int id_2);
 
         int sortEdges(Node *node);
         int sortEdges(int it);

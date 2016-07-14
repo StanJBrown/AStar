@@ -30,19 +30,29 @@ int Graph::addNode(int id, float x, float y)
 }
 
 
-bool Graph::checkIfEdgeExists(Node *node_1, Node *node_2)
+int Graph::checkIfEdgeExists(Node *node_1, Node *node_2)
 {
+    if (node_1 == NULL){
+        std::cout << "First node does not exist" << std::endl;
+        return -1;
+    }
+
+    if (node_2 == NULL){
+        std::cout << "Second node does not exist" << std::endl;
+        return -1;
+    }
+
     std::list<std::pair<Node*, float> >::iterator it;
     for (it = node_1->edges.begin(); it !=node_1->edges.end(); ++it){
         if (it->first == node_2){
-            return true;
+            return 1;
         }
     }
-    return false;
+    return 0;
 }
 
 
-bool Graph::checkIfEdgeExists(int id_1, int id_2)
+int Graph::checkIfEdgeExists(int id_1, int id_2)
 {
     return this->checkIfEdgeExists(this->getNode(id_1), this->getNode(id_2));
 }
@@ -50,6 +60,10 @@ bool Graph::checkIfEdgeExists(int id_1, int id_2)
 
 int Graph::sortEdges(Node *node)
 {
+    if (node == NULL){
+        std::cout << "cannot sort, node does not exist" << std::endl;
+        return -1;
+    }
     node->edges.sort(sortEdgesByCost);
     return 0;
 }
@@ -57,16 +71,23 @@ int Graph::sortEdges(Node *node)
 
 int Graph::sortEdges(int id)
 {
-    Node *node;
-    node = this->getNode(id);
-    node->edges.sort(sortEdgesByCost);
-    return 0;
+    return this->sortEdges(this->getNode(id));
 }
 
 
 int Graph::addEdge(Node *node_1, Node *node_2)
 {
     float cost;
+
+    if (node_1 == NULL){
+        std::cout << "Cannot add Edge, first node does not exist" << std::endl;
+        return -1;
+    }
+
+    if (node_2 == NULL){
+        std::cout << "Cannot add Edge, second node does not exist" << std::endl;
+        return -1;
+    }
 
     if (this->checkIfEdgeExists(node_1, node_2) == false){
         this->calcEdgeCost(node_1, node_2, cost);
@@ -82,20 +103,19 @@ int Graph::addEdge(Node *node_1, Node *node_2)
 
 int Graph::addEdge(int id_1, int id_2)
 {
-    Node *node_1;
-    Node *node_2;
-    float cost;
-
-    node_1 = this->graph.find(id_1)->second;
-    node_2 = this->graph.find(id_2)->second;
-
-    return this->addEdge(node_1, node_2);
+    return this->addEdge(this->getNode(id_1), this->getNode(id_2));
 }
+
 
 int Graph::removeEdge(Node *node_1, Node *node_2)
 {
     std::list<std::pair<Node*, float> >::iterator it;
     // search for an edge connecting 1 to 2
+    if (node_1 == NULL || node_2 == NULL){
+        std::cout << "Cannot remove edge, one node does not exist" << std::endl;
+        return -1;
+    }
+
     if (this->checkIfEdgeExists(node_1, node_2)){
         for (it = node_1->edges.begin(); it !=node_1->edges.end(); ++it){
             if (it->first == node_2){
@@ -146,9 +166,12 @@ int Graph::calcCostToGo(int id_1, int id_2, float &cost)
 
     node_1 = this->graph.find(id_1)->second;
     node_2 = this->graph.find(id_2)->second;
-    this->calcCostToGo(node_1, node_2, cost);
-
-    return 0;
+    if (node_1 != NULL && node_2 != NULL){
+        this->calcCostToGo(node_1, node_2, cost);
+        return 0;
+    } else {
+        return -1;
+    }
 }
 
 
@@ -164,7 +187,13 @@ int Graph::calcDistance(int id_1, int id_2, float &cost)
 
 Node* Graph::getNode(int id)
 {
-    return this->graph.find(id)->second;
+    std::map<int, Node*>::iterator it;
+    it = this->graph.find(id);
+    if (it != graph.end()){
+        return it->second;
+    } else {
+        return NULL;
+    }
 }
 
 
