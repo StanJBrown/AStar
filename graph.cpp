@@ -1,7 +1,8 @@
 #include "graph.hpp"
 
 
-Graph::~Graph(){
+Graph::~Graph()
+{
     // clean up the allocated nodes
     std::map<int, Node*>::iterator it;
     for(it = this->graph.begin(); it != this->graph.end(); ++it){
@@ -16,7 +17,7 @@ int Graph::addNode(int id, float x, float y, float cost)
         Node *new_node = new Node(id, x, y);
         new_node->node_cost = cost;
         this->graph[id] = new_node;
-    }else{
+    } else {
         std::cout << "ERROR, node id already exists" << std::endl;
         return -1;
     }
@@ -29,7 +30,8 @@ int Graph::addNode(int id, float x, float y)
 }
 
 
-bool Graph::checkIfEdgeExists(Node *node_1, Node *node_2){
+bool Graph::checkIfEdgeExists(Node *node_1, Node *node_2)
+{
     std::list<std::pair<Node*, float> >::iterator it;
     for (it = node_1->edges.begin(); it !=node_1->edges.end(); ++it){
         if (it->first == node_2){
@@ -40,18 +42,21 @@ bool Graph::checkIfEdgeExists(Node *node_1, Node *node_2){
 }
 
 
-bool Graph::checkIfEdgeExists(int id_1, int id_2){
+bool Graph::checkIfEdgeExists(int id_1, int id_2)
+{
     return this->checkIfEdgeExists(this->getNode(id_1), this->getNode(id_2));
 }
 
 
-int Graph::sortEdges(Node *node){
+int Graph::sortEdges(Node *node)
+{
     node->edges.sort(sortEdgesByCost);
     return 0;
 }
 
 
-int Graph::sortEdges(int id){
+int Graph::sortEdges(int id)
+{
     Node *node;
     node = this->getNode(id);
     node->edges.sort(sortEdgesByCost);
@@ -113,7 +118,8 @@ int Graph::removeEdge(Node *node_1, Node *node_2)
 }
 
 
-int Graph::removeEdge(int id_1, int id_2){
+int Graph::removeEdge(int id_1, int id_2)
+{
     return this->removeEdge(this->getNode(id_1), this->getNode(id_2));
 }
 
@@ -193,7 +199,7 @@ int Graph::reconstructPath(QueueEntry *end_entry, int start_id, std::vector<int>
 {
     QueueEntry *current_entry;
     current_entry = end_entry;
-    while(current_entry->node->id != start_id){
+    while (current_entry->node->id != start_id){
         path.push_back(current_entry->node->id);
         current_entry = current_entry->parent;
     }
@@ -202,10 +208,11 @@ int Graph::reconstructPath(QueueEntry *end_entry, int start_id, std::vector<int>
 }
 
 
-int Graph::cleanupEntries(std::set<QueueEntry*> &entries){
+int Graph::cleanupEntries(std::set<QueueEntry*> &entries)
+{
     // delete all of the entries created by new
     std::set<QueueEntry*>::iterator it;
-    for(it = entries.begin(); it != entries.end(); ++it){
+    for (it = entries.begin(); it != entries.end(); it++){
         delete *it;
     }
     return 0;
@@ -243,12 +250,12 @@ int Graph::AStarSearch(
     queue.push(starting_entry);
 
     QueueEntry *next_entry;
-    while(!queue.empty()){
+    while (!queue.empty()){
         QueueEntry *current_entry = queue.top();
         queue.pop();
 
         // we are done
-        if(current_entry->node->id == end_id){
+        if (current_entry->node->id == end_id){
             if(this->reconstructPath(current_entry, start_id, path) == 0){
                 this->cleanupEntries(entries); // free the memory allocated to the queue entries
                 return 0;
@@ -278,13 +285,14 @@ int Graph::AStarSearch(
     return -1;
 }
 
-int Graph::replaceEdge(Node *node_1, Node *node_2, float &cost){
+int Graph::replaceEdge(Node *node_1, Node *node_2, float &cost)
+{
     // find an edge with a higher cost then node_1 and node_2 and remove it
     std::list<std::pair<Node*, float> >::iterator it;
     int replaced_node_id;
     Node *replaced_node;
 
-    for(it = node_1->edges.begin(); it != node_1->edges.end(); it++){
+    for (it = node_1->edges.begin(); it != node_1->edges.end(); it++){
         if (it->second > cost){
             replaced_node_id = it->first->id;
             it = node_1->edges.erase(it);
@@ -308,7 +316,7 @@ int Graph::replaceEdge(Node *node_1, Node *node_2, float &cost){
 int Graph::removeEdgeSingular(Node *node_1, Node *node_2)
 {
     std::list<std::pair<Node*, float> >::iterator it;
-    for(it = node_1->edges.begin(); it != node_1->edges.end(); ++it){
+    for (it = node_1->edges.begin(); it != node_1->edges.end(); ++it){
         if (it->first->id == node_2->id){
             // this edge has been replaced in the node 1 and must be removed from this edge
             node_1->edges.erase(it);
@@ -318,7 +326,8 @@ int Graph::removeEdgeSingular(Node *node_1, Node *node_2)
     return 0;
 }
 
-int Graph::findNearestNodes(int number){
+int Graph::findNearestNodes(int number)
+{
     std::map<int, Node*>::iterator it_1;
     std::map<int, Node*>::iterator it_2;
     float cost;
@@ -340,7 +349,7 @@ int Graph::findNearestNodes(int number){
                 this->sortEdges(node_1);
                 this->sortEdges(node_2); // resort the edge lists based on cost
                 continue;
-            }else{
+            } else {
                 this->calcCostToGo(node_1, node_2, cost);
                 if (cost <= node_1->edges.back().second){
                     // the cost to go to this node is larger then the end of
@@ -356,7 +365,8 @@ int Graph::findNearestNodes(int number){
     return 0;
 }
 
-int Graph::printAllEdges(){
+int Graph::printAllEdges()
+{
     std::map<int, Node*>::iterator it;
     std::list<std::pair<Node*, float> >::iterator edge_it;
     Node *current_node;
@@ -368,12 +378,12 @@ int Graph::printAllEdges(){
     int number_of_edges;
 
     edge_number = 1;
-    for(it = this->graph.begin(); it != this->graph.end(); ++it){
+    for (it = this->graph.begin(); it != this->graph.end(); ++it){
         current_node = it->second;
         edge_it = current_node->edges.begin();
         number_of_edges = current_node->edges.size();
         printf("Edge: %i has %i edges \n", current_node->id, number_of_edges );
-        for(edge_it; edge_it != current_node->edges.end(); ++edge_it){
+        for (edge_it; edge_it != current_node->edges.end(); ++edge_it){
             id_1 = current_node->id;
             id_2 = edge_it->first->id;
             cost = edge_it->second;
@@ -385,47 +395,47 @@ int Graph::printAllEdges(){
 }
 
 
-int main()
-{
-    Graph test_graph;
-    test_graph.addNode(1, 2, 20);
-    test_graph.addNode(2, 10, 15, 0);
-    test_graph.addNode(3, 10, 10, 20);
-    test_graph.addNode(4, 10, 16, 0);
-    test_graph.addNode(5, 11, 52, 0);
-    test_graph.addNode(6, -20, 22, 0);
-    test_graph.addNode(7, 12, -52, 0);
-    test_graph.addNode(8, 0, 2, 0);
-    // test_graph.addEdge(1, 2);
-    // test_graph.addEdge(3, 1);
-    // test_graph.addEdge(2, 3);
-    // test_graph.addEdge(2, 4);
-    // test_graph.addEdge(3, 4);
-    // test_graph.addEdge(6, 4);
-    // test_graph.removeEdge(3, 4);
-    // test_graph.removeEdge(1, 2);
-
-    Node *node;
-    float cost;
-    // test_graph.calcCostToGo(1,3, cost);
-    std::vector<int> path;
-    float total_cost;
-    // test_graph.AStarSearch(1, 4, total_cost, path);
-    // for (int i = 0; i < path.size(); i++){
-    //     std::cout << path[i] << std::endl;
-    // }
-    std::cout << "link nearest Nodes" << std::endl;
-    node = test_graph.getNode(1);
-    test_graph.findNearestNodes(4);
-    test_graph.printAllEdges();
-
-    // std::vector<int> path2;
-    // test_graph.AStarSearch(1, 4, total_cost, path2);
-    // for (int i = 0; i < path2.size(); i++){
-    //     std::cout << path2[i] << std::endl;
-    // }
-
-}
+// int main()
+// {
+//     Graph test_graph;
+//     test_graph.addNode(1, 2, 20);
+//     test_graph.addNode(2, 10, 15, 0);
+//     test_graph.addNode(3, 10, 10, 20);
+//     test_graph.addNode(4, 10, 16, 0);
+//     test_graph.addNode(5, 11, 52, 0);
+//     test_graph.addNode(6, -20, 22, 0);
+//     test_graph.addNode(7, 12, -52, 0);
+//     test_graph.addNode(8, 0, 2, 0);
+//     // test_graph.addEdge(1, 2);
+//     // test_graph.addEdge(3, 1);
+//     // test_graph.addEdge(2, 3);
+//     // test_graph.addEdge(2, 4);
+//     // test_graph.addEdge(3, 4);
+//     // test_graph.addEdge(6, 4);
+//     // test_graph.removeEdge(3, 4);
+//     // test_graph.removeEdge(1, 2);
+//
+//     Node *node;
+//     float cost;
+//     // test_graph.calcCostToGo(1,3, cost);
+//     std::vector<int> path;
+//     float total_cost;
+//     // test_graph.AStarSearch(1, 4, total_cost, path);
+//     // for (int i = 0; i < path.size(); i++){
+//     //     std::cout << path[i] << std::endl;
+//     // }
+//     std::cout << "link nearest Nodes" << std::endl;
+//     node = test_graph.getNode(1);
+//     test_graph.findNearestNodes(2);
+//     test_graph.printAllEdges();
+//
+//     std::vector<int> path2;
+//     test_graph.AStarSearch(1, 8, total_cost, path2);
+//     for (int i = 0; i < path2.size(); i++){
+//         std::cout << path2[i] << std::endl;
+//     }
+//
+// }
 
 
 

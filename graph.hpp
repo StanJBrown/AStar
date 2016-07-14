@@ -1,3 +1,6 @@
+#ifndef PRM_GRAPH_BASE_H_
+#define PRM_GRAPH_BASE_H_
+
 #include <iostream>
 #include <vector>
 #include <map>
@@ -41,14 +44,18 @@ class QueueEntry
         }
 };
 
-struct compareQueueEntry{
-    bool operator()(const QueueEntry *q1,const QueueEntry *q2){
+struct compareQueueEntry
+{
+    bool operator()(const QueueEntry *q1,const QueueEntry *q2)
+    {
         return q1->cost > q2->cost;
     }
 };
 
-static bool sortEdgesByCost (const std::pair<Node*, float> &edge_1,
-    const std::pair<Node*, float> &edge_2){
+static bool sortEdgesByCost (
+    const std::pair<Node*, float> &edge_1,
+    const std::pair<Node*, float> &edge_2)
+{
     return edge_1.second < edge_2.second; // desencing order
 }
 
@@ -100,3 +107,4 @@ class Graph
 
 };
 
+#endif
