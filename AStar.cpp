@@ -1,4 +1,4 @@
-#include "graph.hpp"
+#include "AStar.hpp"
 
 
 Graph::~Graph()

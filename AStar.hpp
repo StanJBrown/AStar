@@ -1,5 +1,5 @@
-#ifndef PRM_GRAPH_BASE_H_
-#define PRM_GRAPH_BASE_H_
+#ifndef ASTAR_GRAPH_BASE_H_
+#define ASTAR_GRAPH_BASE_H_
 
 #include <iostream>
 #include <vector>

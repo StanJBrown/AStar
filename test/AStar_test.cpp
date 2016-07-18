@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "graph.hpp"
+#include <AStar.hpp>
 
 
 TEST(addNodeAndGetNodeTEST, addAndGetNodes){

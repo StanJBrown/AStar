@@ -1,6 +1,6 @@
 cd build
 cmake ..
 make
-valgrind --leak-check=full ./graph_test
+valgrind --leak-check=full ./AStar_test
 
 
